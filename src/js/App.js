@@ -42,16 +42,13 @@ export class App {
 		$('#configurationForm').submit(this.handleSubmit);
 	}
 
-
-	
-
 	generatePassword(element) {
 		const length = $(element).data('length') || 20;
 		const alphanumeric = $(element).data('alphanumeric') || false;
 
 		let pattern = /[\d\W\w\p]/;
 
-		if(alphanumeric){
+		if(alphanumeric) {
 			pattern = /[\d\w]/;
 		}
 
@@ -68,7 +65,7 @@ export class App {
 	handleSubmit(event) {
 
 		const getUrl = function() {
-			if(window.location.href.indexOf('devMode') >= 0){
+			if(window.location.href.indexOf('localhost') >= 0){
 				return url_dev;
 			}
 			return url_prod;

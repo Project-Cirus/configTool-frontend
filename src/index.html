@@ -26,7 +26,7 @@
   <div class="collapse navbar-collapse" id="navbarsExampleDefault">
     <ul class="navbar-nav mr-auto">
       <li class="nav-item">
-        <a class="nav-link" href="https://github.com/project-Cirus/cloud"><i class="fa fa-github fa-lg"></i> Github</a>
+        <a class="nav-link" href="https://github.com/Project-Cirus/cloud" target="_blank" rel="noopenern noreferrer"><i class="fa fa-github fa-lg"></i> Github</a>
       </li>
       <li class="nav-item active">
         <a class="nav-link" href="#"><i class="fa fa-tools fa-lg"></i> Configuration Tool <span class="sr-only">(current)</span></a>
@@ -47,27 +47,54 @@
       </div>
     </header>
 
-    <p class="lead">We have prepared a little form, which helps you define the basic settings to get quickly started with your instance of <b>PROJECT CIRUS</b>. For a full guide to all configurable parameters and further instructions, please check our <a href="https://github.com/florian/cloud">documentation</a>. Happy clouding! 🌥️</p>
+    <p class="lead">We have prepared a little form, which helps you define the basic settings to get quickly started with your instance of <b>PROJECT CIRUS</b>. For a full guide to all configurable parameters and further instructions, please check our <a href="https://github.com/Project-Cirus/cloud" target="_blank" rel="noopenern noreferrer">documentation</a>. Happy clouding! 🌥️</p>
 
     <div id="result" style="display: none">
 
       <h3>Success!</h3>
 
-      <p>Almost done. Please make sure you are having Docker installed, and follow the proceeding steps.</p>
+      <p>Almost done. Please make sure you are having Docker and Docker-Compose installed, and follow the proceeding steps.</p>
 
-      <h5>1. Get the sources</h5>
-      <pre><code>$ mkdir /etc/dockercloud <br/>$ cd /etc/dockercloud<br/>$ wget -O project-cirrus.zip {{zipPath}}<br/>$ unzip project-cirrus.zip</code></pre>
+      <h5>1. Make sure you have a domain configured to point to your server</h5>
+      <p>You will either need a wildcard A record or separate A records for the required subdomains:</p>
+      <pre><code>*.example.com - A - YOUR-SERVER-IP<br /><br />or<br /><br />cloud.example.com - A - YOUR-SERVER-IP<br />synapse.example.com - A - YOUR-SERVER-IP<br />riot.example.com - A - YOUR-SERVER-IP<br />mail.example.com - A - YOUR-SERVER-IP</code></pre>
+      <p>You also need to set an MX and SPF record for your mail server:</p>
+      <pre><code>MX 10 - mail.example.com.<br />TXT - v=spf1 mx a:mail.example.com -all</code></pre>
+      <p>Make sure your DNS settings are in effect by pinging your subdomain before proceeding with step 2.</p>
+      <code>$ ping cloud.example.com</code><br /><br />
+
+      <h5>2. Get the sources</h5>
+      <p>On your host server create a new project directory and make sure your user has read, write and execute rights to the directory.</p>
+      <p>It might be a good idea to create a new user for this project. It is important that this user is allowed to run <code>docker</code> and <code>docker-compose</code> commands. For this purpose you might want to add your user to the <code>sudo</code> group.</p>
+      <code>
+        $ mkdir /srv/projectcirus<br/>
+        $ cd /srv/projectcirus<br/>
+        $ wget -O projectcirus.tar.gz {{zipPath}}<br/>
+        $ tar -xzf projectcirus.tar.gz --strip 1
+      </code><br /><br />
       <p>Please review your downloaded and extracted files.</p>
 
-      <h5>2. Create synapse keys and folder structure</h5>
-      <pre><code>$./synapse/setup.sh</code></pre>
-      <p>This will run the <code>generate</code>-command inside the synapse container.</p>
+      <h5>3. Create synapse keys and folder structure</h5>
+      <p>This will run the <code>generate</code>-command to generate keys for the synapse container.</p>
+      <code>$ ./synapse/setup.sh</code><br /><br />
 
-      <h5>3. Download and start the containers</h5>
-      <pre><code>$ docker-compose up -d</code></pre>
+      <h5>4. Download and start the containers</h5>
+      <code>$ sudo docker-compose up -d</code><br /><br />
 
-      <h5>4. Finish the Nextcloud installation</h5>
-      <pre><code>$ docker-compose exec --user www-data nextcloud /install/install.sh</code></pre>
+      <h5>5. Install additional nextcloud apps and finish configuration</h5>
+      <code>$ sudo docker-compose exec --user www-data nextcloud /install/install.sh</code><br /><br />
+
+      <h5>6. Create the initial index for full text search</h5>
+      <code>$ sudo docker exec -u www-data projectcirus_nextcloud_1 php occ fulltextsearch:index</code><br /><br />
+
+      <h5>7. Create a cron job for your nextcloud on your host system (example for Ubuntu)</h5>
+      <code>$ sudo crontab -e</code><br /><br />
+      <p>Add the following to your crontab:</p>
+      <pre><code>*/5 * * * * /usr/bin/docker exec --user www-data projectcirus_nextcloud_1 php -f cron.php > /dev/null 2>&1</code></pre>
+
+      <h5>8. Congratulations on setting up your cloud!</h5>
+      <p>You can now log into your mail server to create new users, log into nextcloud to collaboratively work on documents, use the chat client and much more!</p>
+      <p>For more information, please refer to our other docs on <a href="https://github.com/Project-Cirus/cloud" target="_blank" rel="noopenern noreferrer">Github</a>.</p>
 
     </div>
 
@@ -76,7 +103,7 @@
       <div class="form-group">
         <label for="domain">Server Domain</label>
         <input type="text" class="form-control" name="domain" aria-describedby="domainHelp" placeholder="example.com" required="required">
-        <small id="domainHelp" class="form-text text-muted">The domain where nextcloud can be reached.</small>
+        <small id="domainHelp" class="form-text text-muted">The domain under which your cloud services can be reached.</small>
       </div>
 
       <div class="form-group">
@@ -86,15 +113,39 @@
       </div>
 
       <div class="form-group">
-        <label for="nextcloud_db_root_password">Nextcloud Database Root Password</label>
-        <input type="text" class="form-control password" name="nextcloud_db_root_password" aria-describedby="nextcloud_db_root_passwordHelp">
-        <small id="nextcloud_db_root_passwordHelp" class="form-text text-muted">The MySQL root password allows the root user to have full access to the MySQL database. </small>
+        <label for="nextcloud_admin_user">Nextcloud Admin User</label>
+        <input type="text" class="form-control" name="nextcloud_admin_user" aria-describedby="nextcloud_admin_userHelp" value="admin" required="required">
+        <small id="nextcloud_admin_userHelp" class="form-text text-muted">The username of your nextcloud admin. You will be able to log into nextcloud with this user in case you want to adjust some general settings.</small>
+      </div>
+
+      <div class="form-group">
+        <label for="nextcloud_admin_password">Nextcloud Admin Password</label>
+        <input type="text" class="form-control password" name="nextcloud_admin_password" aria-describedby="nextcloud_admin_passwordHelp" required="required" data-alphanumeric="true">
+        <small id="nextcloud_admin_passwordHelp" class="form-text text-muted">The password of your nextcloud admin. Do not use the following characters: <code>', ", \, #</code></small>
+      </div>
+
+      <div class="form-group">
+        <label for="nextcloud_db_root_password">MySQL Root Password</label>
+        <input type="text" class="form-control password" name="nextcloud_db_root_password" aria-describedby="nextcloud_db_root_passwordHelp" required="required" data-alphanumeric="true">
+        <small id="nextcloud_db_root_passwordHelp" class="form-text text-muted">The MySQL root password allows the root user to have full access to the MySQL database. Do not use the following characters: <code>', ", \, #</code></small>
+      </div>
+
+      <div class="form-group">
+        <label for="nextcloud_db_name">Nextcloud Database Name</label>
+        <input type="text" class="form-control" name="nextcloud_db_name" aria-describedby="nextcloud_db_nameHelp" value="nextcloud_db" required="required">
+        <small id="nextcloud_db_nameHelp" class="form-text text-muted">The name of your nextcloud database.</small>
+      </div>
+
+      <div class="form-group">
+        <label for="nextcloud_db_user">Nextcloud Database User</label>
+        <input type="text" class="form-control" name="nextcloud_db_user" aria-describedby="nextcloud_db_userHelp" value="nextcloud_dbu" required="required">
+        <small id="nextcloud_db_userHelp" class="form-text text-muted">The name of your nextcloud database user.</small>
       </div>
 
       <div class="form-group">
         <label for="nextcloud_db_password">Nextcloud Database Password</label>
-        <input type="text" class="form-control password" name="nextcloud_db_password" aria-describedby="nextcloud_db_passwordHelp">
-        <small id="nextcloud_db_passwordHelp" class="form-text text-muted">This password is used to perform internal mysql Lookups. A secure password was automatically generated. Change it, if you wish.</small>
+        <input type="text" class="form-control password" name="nextcloud_db_password" aria-describedby="nextcloud_db_passwordHelp" required="required" data-alphanumeric="true">
+        <small id="nextcloud_db_passwordHelp" class="form-text text-muted">The password of your nextcloud database user. Do not use the following characters: <code>', ", \, #</code></small>
       </div>
 
 
@@ -102,17 +153,25 @@
 
         <legend>Matrix Synapse Settings</legend>
 
+        <p>The synapse matrix server is used to enable real-time communication through the chat client.</p>
+
         <div class="form-group">
-          <label for="matrix_server_name">Server Name</label>
-          <input type="text" class="form-control" name="matrix_server_name" aria-describedby="matrix-server_nameHelp" placeholder="synapse.example.com" required="required">
-          <small id="matrix-server_nameHelp" class="form-text text-muted">This name used by remote servers to connect to this server,The domain where nextcloud can be reached.</small>
+          <label for="matrix_db_user">Matrix Database User</label>
+          <input type="text" class="form-control" name="matrix_db_user" aria-describedby="matrix_db_userHelp" value="synapse_dbu" required="required">
+          <small id="matrix_db_userHelp" class="form-text text-muted">The name of your matrix database user.</small>
+        </div>
+  
+        <div class="form-group">
+          <label for="matrix_db_password">Matrix Database Password</label>
+          <input type="text" class="form-control password" name="matrix_db_password" aria-describedby="matrix_db_passwordHelp" required="required" data-alphanumeric="true">
+          <small id="matrix_db_passwordHelp" class="form-text text-muted">The password of your matrix database user. Do not use the following characters: <code>', ", \, #</code></small>
         </div>
 
         <div class="form-group">
           <label for="matrix_enable_metrics">Enable Metrics</label>
           <select class="form-control" name="matrix_enable_metrics" aria-describedby="matrix_enable_metricsHelp" required="required">
-            <option selected="selected" value="True">Yes</option>
-            <option value="False">No</option>
+            <option value="true">Yes</option>
+            <option selected="selected" value="false">No</option>
           </select>
           <small id="matrix_enable_metricsHelp" class="form-text text-muted">Enable collection and rendering of performance metrics</small>
         </div>
@@ -120,10 +179,28 @@
         <div class="form-group">
           <label for="matrix_report_stats">Report Stats Metrics</label>
           <select class="form-control" name="matrix_report_stats" aria-describedby="matrix_report_statsHelp" required="required">
-            <option selected="selected" value="True">Yes</option>
-            <option value="False">No</option>
+            <option value="true">Yes</option>
+            <option selected="selected" value="false">No</option>
           </select>
           <small id="matrix_report_statsHelp" class="form-text text-muted">Whether or not to report anonymized homeserver usage statistics.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="matrix_registration_shared_secret">Registration Shared Secret</label>
+          <input type="text" class="form-control password" name="matrix_registration_shared_secret" aria-describedby="matrix_registration_shared_secretHelp" required="required" data-alphanumeric="true" data-length="50">
+          <small id="matrix_registration_shared_secretHelp" class="form-text text-muted">Allows registration of standard or admin accounts. Do not share with anyone. Do not use the following characters: <code>', ", \, #</code></small>
+        </div>
+
+        <div class="form-group">
+          <label for="matrix_macaroon_secret_key">Macaroon Secret Key</label>
+          <input type="text" class="form-control password" name="matrix_macaroon_secret_key" aria-describedby="matrix_macaroon_secret_keyHelp" required="required" data-alphanumeric="true" data-length="50">
+          <small id="matrix_macaroon_secret_keyHelp" class="form-text text-muted">A secret which is used to sign access tokens. Do not share with anyone. Do not use the following characters: <code>', ", \, #</code></small>
+        </div>
+
+        <div class="form-group">
+          <label for="matrix_form_secret">Form Secret</label>
+          <input type="text" class="form-control password" name="matrix_form_secret" aria-describedby="matrix_form_secretHelp" required="required" data-alphanumeric="true" data-length="50">
+          <small id="matrix_form_secretHelp" class="form-text text-muted">A secret which is used for form validation. Do not share with anyone. Do not use the following characters: <code>', ", \, #</code></small>
         </div>
 
       </fieldset>
@@ -134,28 +211,38 @@
 
         <legend>Mailu Settings</legend>
 
+        <p>These settings will be used to set up the mail server, which is also used to authenticate users in nextcloud and the chat client.</p>
+
         <div class="form-group">
           <label for="mailu_secret_key">Mailu Secret Key</label>
-          <input type="text" class="form-control password" name="mailu_secret_key" aria-describedby="mailu_secret_keyHelp" data-length="16" data-alphanumeric="true">
+          <input type="text" class="form-control password" name="mailu_secret_key" aria-describedby="mailu_secret_keyHelp" data-length="16" data-alphanumeric="true" required="required">
           <small id="mailu_secret_keyHelp" class="form-text text-muted">The secret key is set to a 16 bytes randomly generated value. It is intended to secure authentication cookies among other critical uses.</small>
         </div>
 
         <div class="form-group">
+          <label for="mailu_admin_user">Mailu Admin User</label>
+          <input type="text" class="form-control" name="mailu_admin_user" aria-describedby="mailu_admin_userHelp" value="admin" required="required">
+          <small id="mailu_admin_userHelp" class="form-text text-muted">For administrative tasks, an admin user account will be needed in Mailu. Please state here the username to this account.</small>
+        </div>
+
+        <div class="form-group">
           <label for="mailu_admin_password">Mailu Admin Password</label>
-          <input type="text" class="form-control password" name="mailu_admin_password" aria-describedby="mailu_admin_passwordHelp">
-          <small id="mailu_admin_passwordHelp" class="form-text text-muted">For administrative tasks, an admin user account will be needed in Mailu. An admin account with your domain will automatically created (admin@example.com). Please state here the password to this account.</small>
+          <input type="text" class="form-control password" name="mailu_admin_password" aria-describedby="mailu_admin_passwordHelp" data-alphanumeric="true" required="required">
+          <small id="mailu_admin_passwordHelp" class="form-text text-muted">For administrative tasks, an admin user account will be needed in Mailu. Please state here the password to this account. Do not use the following characters: <code>', ", \, #</code></small>
         </div>
 
         <div class="form-group">
           <label for="mailu_enable_clamav">Enable ClamAV</label>
           <select class="form-control" name="mailu_enable_clamav" aria-describedby="mailu_enable_clamavHelp" required="required">
-            <option selected="selected" value="clamav">Yes</option>
-            <option value="none">No</option>
+            <option disabled="disabled" value="clamav">Yes</option>
+            <option selected="selected" value="none">No</option>
           </select>
           <small id="mailu_enable_clamavHelp" class="form-text text-muted">Clam AntiVirus (ClamAV) is a free software, cross-platform and open-source antivirus software toolkit able to detect many types of malicious software, including viruses. If Mailu is being run on a host with limited resources, it can be disabled to increase performance.</small>
         </div>
 
       </fieldset>
+
+      <br />
 
       <div class="form-group">
         <button type="submit" class="btn btn-primary" id="btnSubmit">Generate</button>
@@ -163,9 +250,8 @@
             <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
             Loading...
         </button>
-
       </div>
-
+      <br /><br />
     </form>
 
 </main><!-- /.container -->
