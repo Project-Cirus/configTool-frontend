@@ -49,7 +49,7 @@
 
     <p class="lead">We have prepared a little form, which helps you define the basic settings to get quickly started with your instance of <b>PROJECT CIRUS</b>. For a full guide to all configurable parameters and further instructions, please check our <a href="https://github.com/Project-Cirus/cloud" target="_blank" rel="noopenern noreferrer">documentation</a>. Happy clouding! 🌥️</p>
 
-    <div id="result" style="display: none">
+    <div id="result" style="display: none;">
 
       <h3>Success!</h3>
 
@@ -65,7 +65,7 @@
 
       <h5>2. Get the sources</h5>
       <p>On your host server create a new project directory and make sure your user has read, write and execute rights to the directory.</p>
-      <p>It might be a good idea to create a new user for this project. It is important that this user is allowed to run <code>docker</code> and <code>docker-compose</code> commands. For this purpose you might want to add your user to the <code>sudo</code> group.</p>
+      <p>It might be a good idea to create a new user for this project. It is important that this user is allowed to run <code>docker</code> and <code>docker-compose</code> commands and has execution permissions for the unpacked files. You also might want to add your user to the <code>sudo</code> group.</p>
       <code>
         $ mkdir /srv/projectcirus<br/>
         $ cd /srv/projectcirus<br/>
@@ -76,10 +76,13 @@
 
       <h5>3. Create synapse keys and folder structure</h5>
       <p>This will run the <code>generate</code>-command to generate keys for the synapse container.</p>
-      <code>$ ./synapse/setup.sh</code><br /><br />
+      <code>$ sudo ./synapse/setup.sh</code><br /><br />
 
-      <h5>4. Download and start the containers</h5>
-      <code>$ sudo docker-compose up -d</code><br /><br />
+      <h5>4. Download and start the containers and wait for the containers to fully start</h5>
+      <code>
+        $ sudo docker-compose up -d<br />
+        $ sudo docker ps
+      </code><br /><br />
 
       <h5>5. Install additional nextcloud apps and finish configuration</h5>
       <code>$ sudo docker-compose exec --user www-data nextcloud /install/install.sh</code><br /><br />
@@ -87,7 +90,7 @@
       <h5>6. Create a cron job for your nextcloud on your host system (example for Ubuntu)</h5>
       <code>$ sudo crontab -e</code><br /><br />
       <p>Add the following to your crontab:</p>
-      <pre><code>*/5 * * * * /usr/bin/docker exec --user www-data projectcirus_nextcloud_1 php -f cron.php > /dev/null 2>&1</code></pre>
+      <pre><code>*/5 * * * * /usr/bin/docker exec --user www-data nextcloud php -f cron.php > /dev/null 2>&1</code></pre>
 
       <h5>7. Congratulations on setting up your cloud!</h5>
       <p>You can now log into your mail server to create new users, log into nextcloud to collaboratively work on documents, use the chat client and much more!</p>
