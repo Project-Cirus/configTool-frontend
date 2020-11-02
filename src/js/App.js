@@ -1,5 +1,5 @@
 const generatePassword = require('password-generator');
-import { Formhandler } from "./Formhandler";
+import { Formhandler } from "./FormHandler";
 
 
 const url_dev = 'http://localhost:3000/generate';
