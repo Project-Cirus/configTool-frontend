@@ -30,7 +30,7 @@ export class Formhandler {
 		const $resultModule = $('#result');
 
 		if(response.success){
-			const zipPath = `https://configtool.project-cirus.com${response.zipPath}`;
+			const zipPath = `https://setup.project-cirus.org${response.zipPath}`;
 			const html = $resultModule.html().replace('{{zipPath}}', zipPath);
 
 			$('#configurationForm').hide();

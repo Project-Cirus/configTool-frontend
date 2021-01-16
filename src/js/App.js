@@ -3,7 +3,7 @@ import { Formhandler } from "./FormHandler";
 
 
 const url_dev = 'http://localhost:3000/generate';
-const url_prod = 'http://18.157.202.203/generate';
+const url_prod = 'https://setup.project-cirus.org/generate';
 
 const formHandler = new Formhandler();
 
